@@ -1,0 +1,16 @@
+apiVersion: v1
+name: yamin-service
+version: 0.0.1
+appVersion: 0.0.1
+home: https://github.com/feeernando/yamin-service
+description: A Helm chart for running yamin-service on kubernetes.
+icon: https://fiware.github.io/catalogue/img/fiware.png
+keywords:
+- fiware
+- yamin
+sources:
+- https://github.com/feeernando/yamin-service
+maintainers:
+- name: Fernando Muñoz
+  email: fermunozmoyano5@gmail.com
+  
