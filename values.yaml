@@ -12,7 +12,7 @@ service:
   # -- service type
   type: ClusterIP
   # -- port to be used by the service
-  port: 80
+  port: 3000
   # -- addtional annotations, if required
   annotations: {}
 ## if a orion specific service account should be used, it can be configured here
@@ -39,9 +39,9 @@ deployment:
   # -- configuration of the image to be used
   image:
     ## api-umbrella image name
-    repository: profirator/api-umbrella
+    repository: XXX
     # -- tag of the image to be used
-    tag: 0.15.3
+    tag: X.X.X
     # -- specification of the image pull policy
     pullPolicy: IfNotPresent
   # -- additional labels for the deployment, if required

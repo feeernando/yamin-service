@@ -1,7 +1,7 @@
-apiVersion: v1
-name: yamin-service
-version: 0.0.1
-appVersion: 0.0.1
+apiVersion: v1 #VERSIÓN DE LA API DEL CHART # OBLIGATARIO
+name: yamin-service # NOMBRE DEL CHART # OBLIGATARIO
+version: 0.0.1 #VERSIÓN DE CHART #OBLIGATORIO
+appVersion: 0.0.1 #VERSIÓN DE LA APP QUE CONTIENE ESTE CHART # MUY RECOMENDABLE
 home: https://github.com/feeernando/yamin-service
 description: A Helm chart for running yamin-service on kubernetes.
 icon: https://fiware.github.io/catalogue/img/fiware.png

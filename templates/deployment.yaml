@@ -5,7 +5,7 @@ metadata:
   labels:
     {{ include "yamin-service.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.deployment.replicaCount }}
+  replicas: {{ .Values.deployment.replicaCount }} #1
   revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
   strategy:
   {{- with .Values.deployment.updateStrategy }}
@@ -31,5 +31,138 @@ spec:
     spec: 
       serviceAccountName: {{ include "yamin-service.serviceAccountName" . }}
       containers:
-      - name: nginx
-        image: nginx:alpine
+      #mongo
+        - name: mongo
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: mongo:3.4
+          command: --nojurnal
+          networks:
+            - fiware
+          ports: 
+            - name: http
+              containerPort: 27017
+              protocol: TCP
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: root
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              value: example
+      #orion
+        - name: orion
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: fiware/orion
+          links:
+            - mongo
+          ports: 
+            - name: http
+              containerPort: 1026
+              protocol: TCP
+          command: -dbhost mongo -dbuser root -dbpwd example
+          networks:
+            - fiware
+      #web
+        - name: web
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: feeer98/web
+          ports: 
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          depends_on:
+            - orion
+          networks:
+            - fiware
+          command: bash -c "sh /entities/createPredictionEntities.sh && sh /entities/subscribeReqPredictionTicket.sh && sh /entities/subscribeResPredictionTicket.sh && npm start"
+          env:
+            - name: URL_CB
+              value: http://orion:1026/v2/entities/ReqTicketPrediction1/attrs
+            - name: MONGO_URI
+              value: mongodb://root:example@mongo:27017/sth_test?authSource=admin
+          volumes:
+            - ./entities:/entities
+      #spark-.master
+        - name: spark-master
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: bde2020/spark-master:2.4.4-hadoop2.7
+          ports: 
+            - name: port1
+              containerPort: 8080
+              protocol: TCP
+            - name: port2
+              containerPort: 7077
+              protocol: TCP
+            - name: port3
+              containerPort: 9001
+              protocol: TCP
+          env:
+            - name: INIT_DAEMON_STEP
+              value: setup_spark
+            - "constraint:node==spark-master"
+          networks:
+            - fiware
+          command: bash -c "sleep 12 && sh /prediction-job/run-spark-jobs.sh"
+          volumes:
+            - ./prediction-job:/prediction-job
+      #spark-worker-1
+        - name: spark-worker-1
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: bde2020/spark-worker:2.4.4-hadoop2.7
+          depends_on:
+            - spark-master
+          ports: 
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - "SPARK_MASTER=spark://spark-master:7077"
+            - "constraint:node==spark-master"
+          networks:
+            - fiware
+      #maven
+        - name: maven
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: ging/maven
+          expose:
+            - "8092"
+          ports: 
+            - name: http
+              containerPort: 8092
+              protocol: TCP
+          env:
+            - "SPARK_MASTER=spark://spark-master:7077"
+          volumes:
+            - ./prediction-job:/prediction-job
+          networks:
+            - fiware
+      #draco
+        - name: draco
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: ging/fiware-draco
+          depends_on:
+            - orion
+          env:
+            - name: NIFI_WEB_HTTP_PORT
+              value: 9090
+          ports: 
+            - name: port1
+              containerPort: 9090
+              protocol: TCP
+            - name: port2
+              containerPort: 5050
+              protocol: TCP
+          networks:
+            - fiware
+      #python
+        - name: python
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          image: python:3
+          depends_on:
+            - draco
+          env:
+            - name: DRACO_ENDPOINT
+              value: draco:9090
+          networks:
+            - fiware
+          command: bash -c "pip install --no-cache-dir -r /entities/requirements.txt && python /entities/runDraco.py && sh /entities/subscribeResPredictionTicketDraco.sh"
+          volumes:
+            - ./entities:/entities
