@@ -44,9 +44,9 @@ spec:
               protocol: TCP
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
-              value: root
+              value: "root"
             - name: MONGO_INITDB_ROOT_PASSWORD
-              value: example
+              value: "example"
       #orion
         - name: orion
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
@@ -76,9 +76,9 @@ spec:
           ##https://unofficial-kubernetes.readthedocs.io/en/latest/tasks/configure-pod-container/define-command-argument-container/
           env:
             - name: URL_CB
-              value: http://orion:1026/v2/entities/ReqTicketPrediction1/attrs
+              value: "http://orion:1026/v2/entities/ReqTicketPrediction1/attrs"
             - name: MONGO_URI
-              value: mongodb://root:example@mongo:27017/sth_test?authSource=admin
+              value: "mongodb://root:example@mongo:27017/sth_test?authSource=admin"
           #volumes:
           #  - ./entities:/entities
       #spark-.master
@@ -96,7 +96,7 @@ spec:
               containerPort: 9001
               protocol: TCP
           env:
-            - name: INIT_DAEMON_STEP
+            - name: "INIT_DAEMON_STEP"
               value: setup_spark
             - "constraint:node==spark-master"
           #networks:
@@ -143,7 +143,7 @@ spec:
            # - orion
           env:
             - name: NIFI_WEB_HTTP_PORT
-              value: 9090
+              value: "9090"
           ports: 
             - name: port1
               containerPort: 9090
@@ -161,7 +161,7 @@ spec:
            # - draco
           env:
             - name: DRACO_ENDPOINT
-              value: draco:9090
+              value: "draco:9090"
           #networks:
             #- fiware
           command: bash -c "pip install --no-cache-dir -r /entities/requirements.txt && python /entities/runDraco.py && sh /entities/subscribeResPredictionTicketDraco.sh"
